@@ -12,6 +12,7 @@ def create_app():
     app = Flask(__name__)
     # app.config.from_object(os.environ['APP_SETTINGS'])
     app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLALCHEMY_DATABASE_URI
+    app.config['SECRET_KEY'] = 'my_secret_key'
     api = Api(app)
     login_manager = LoginManager()
     login_manager.init_app(app)

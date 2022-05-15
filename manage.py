@@ -9,6 +9,8 @@ from app.wishes.wish import Wish
 from add_function import add_user
 
 app = create_app()
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 @app.route('/logout')
@@ -23,8 +25,7 @@ def login():
     form = LoginForm()
     message = ''
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        user = db.session.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
@@ -33,14 +34,15 @@ def login():
 
 
 @app.route("/admin")
+@login_manager.user_loader
 def admin():
-    db_sess = db_session.create_session()
-    users = db_sess.query(User).all()
-    wishes = db_sess.query(Wish).all()
-    return render_template("show_info.html", users=users, wishes=wishes)
+    users = db.session.query(User).all()
+    wishes = db.session.query(Wish).all()
+    return render_template("show_info.html", users=users)
 
 
 @app.route('/admin/register_user', methods=['GET', 'POST'])
+@login_required
 def register_user():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -48,8 +50,7 @@ def register_user():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Пароли не совпадают")
-        db_sess = db_session.create_session()
-        if db_sess.query(User).filter(User.email == form.email.data).first():
+        if db.session.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой пользователь уже есть")
@@ -64,8 +65,7 @@ def register_user():
 def edit_users(id):
     form = RegisterForm()
     if request.method == "GET":
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == current_user or User.id == 1).first()
+        user = db.session.query(User).filter(User.id == current_user or User.id == 1).first()
         if user:
             form.surname.data = user.surname
             form.name.data = user.name
@@ -76,15 +76,14 @@ def edit_users(id):
         else:
             abort(404)
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == current_user or User.id == 1).first()
+        user = db.session.query(User).filter(User.id == current_user or User.id == 1).first()
         if user:
             user.surname = form.surname.data
             user.name = form.name.data
             user.age = form.age.data
             user.nick = form.nick.data
             user.email = form.email.data
-            db_sess.commit()
+            db.session.commit()
             return redirect('/admin')
         else:
             abort(404)
@@ -94,11 +93,10 @@ def edit_users(id):
 @app.route('/admin/delete_user/<int:id>', methods=['GET', 'POST'])
 @login_required
 def delete_user(id):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == current_user or User.id == 1).first()
+    user = db.session.query(User).filter(User.id == current_user or User.id == 1).first()
     if user:
-        db_sess.delete(user)
-        db_sess.commit()
+        db.session.delete(user)
+        db.session.commit()
     else:
         abort(404)
     return redirect('/admin')

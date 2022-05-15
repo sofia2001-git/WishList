@@ -15,9 +15,6 @@
         Удалить
     </a>
 </div>
-{% endif %}
 {% endfor %}
-{% if current_user.is_authenticated %}
-    <a href="/admin/register_user" class="btn btn-secondary">Добавить пользователя</a>
-{% endif %}
+<a href="/admin/register_user" class="btn btn-secondary">Добавить пользователя</a>
 {% endblock %}
